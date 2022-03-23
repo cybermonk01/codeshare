@@ -43,6 +43,13 @@ const EditorPage = () => {
           setClients(clients);
         }
       );
+
+      socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, userName }) => {
+        toast.success(`${userName} left the room`);
+        setClients((prev) => {
+          return prev.filter((client) => client.socketId !== socketId);
+        });
+      });
     };
     init();
   }, []);
