@@ -30,6 +30,13 @@ io.on("connection", (socket) => {
 
     const clients = getAllConnectedClients(roomID);
     console.log(clients);
+    clients.forEach(({ socketId }) => {
+      io.to(socketId).emit(ACTIONS.JOINED, {
+        clients,
+        userName,
+        socketId: socket.id,
+      });
+    });
   });
 });
 
