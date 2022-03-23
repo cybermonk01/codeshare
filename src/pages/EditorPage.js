@@ -13,6 +13,7 @@ import { initSocket } from "../socket";
 
 const EditorPage = () => {
   const socketRef = useRef(null, "socket");
+  const codeRef = useRef(null, "code");
   const reactNavigator = useNavigate();
   const location = useLocation();
   const { roomID } = useParams();
@@ -41,6 +42,11 @@ const EditorPage = () => {
             console.log(`${userName} joined `);
           }
           setClients(clients);
+
+          socketRef.current.emit(ACTIONS.SYNC_CODE, {
+            code: codeRef.current,
+            socketId,
+          });
         }
       );
 
@@ -52,7 +58,27 @@ const EditorPage = () => {
       });
     };
     init();
+
+    return () => {
+      socketRef.current.disconnect();
+      socketRef.current.off(ACTIONS.JOINED);
+      socketRef.current.off(ACTIONS.DISCONNECTED);
+    };
   }, []);
+
+  async function copyRoomID() {
+    try {
+      await navigator.clipboard.writeText(roomID);
+      toast.success("Room ID has been copied successfully");
+    } catch (err) {
+      toast.error("Could not copy Room Id");
+      console.log(err);
+    }
+  }
+
+  function leaveRoom() {
+    reactNavigator("/");
+  }
 
   if (!location.state) {
     return <Navigate to="/" />;
@@ -72,11 +98,21 @@ const EditorPage = () => {
             ))}
           </div>
         </div>
-        <button className="btn copyBtn">Copy Room Id</button>
-        <button className="btn leaveBtn">Leave</button>
+        <button className="btn copyBtn" onClick={copyRoomID}>
+          Copy Room Id
+        </button>
+        <button className="btn leaveBtn" onClick={leaveRoom}>
+          Leave
+        </button>
       </div>
       <div className="editorWrap">
-        <Editor />
+        <Editor
+          socketRef={socketRef}
+          roomID={roomID}
+          onCodeChange={(code) => {
+            codeRef.current = code;
+          }}
+        />
       </div>
     </div>
   );
